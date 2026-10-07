@@ -220,7 +220,7 @@ export default async function AdminApprovalsPage({
 
                                             {/* Only show approval buttons if the request is still PENDING */}
                                             {req.status === "PENDING" && req.institute && (
-                                                <ApprovalButtons requestId={req.id} />
+                                                <ApprovalButtons requestId={req.id} request={req} />
                                             )}
                                             
                                             <AdminDeleteButton id={req.id} onDelete={deleteInstituteRequestAction} title="Delete Request?" />

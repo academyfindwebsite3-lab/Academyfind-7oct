@@ -79,7 +79,7 @@ export default async function InstituteRequestDetailPage({
                         <AdminRequestNotifyButton request={request} />
                     )}
                     {request.status === "PENDING" && request.institute && (
-                        <ApprovalButtons requestId={request.id} />
+                        <ApprovalButtons requestId={request.id} request={request} />
                     )}
                     <AdminDeleteButton id={request.id} onDelete={deleteInstituteRequestAction} title="Delete Request" />
                 </div>

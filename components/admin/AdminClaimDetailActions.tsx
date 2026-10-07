@@ -19,14 +19,6 @@ import { FaWhatsapp } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { updateClaimStatus } from "@/lib/User/admin/adminClaim";
 import { deleteClaimAction } from "@/app/(af-ass-manage)/af-ass-manage/claims/actions";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import {
   buildApprovalLinks,
@@ -34,6 +26,7 @@ import {
   buildApprovalWhatsAppUrl,
 } from "@/lib/institutes/claimLinks";
 import { ClaimData } from "./AdminClaimRowActions";
+import { useNotifyManager } from "./AdminNotifyManagerModal";
 
 interface AdminClaimDetailActionsProps {
   claim: ClaimData & {
@@ -51,14 +44,28 @@ export default function AdminClaimDetailActions({ claim }: AdminClaimDetailActio
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [copiedMessage, setCopiedMessage] = useState(false);
+  const { openNotifyManager } = useNotifyManager();
 
   const waUrl = buildApprovalWhatsAppUrl(claim);
   const waMessage = buildApprovalWhatsAppMessage(claim);
   const { publicListingUrl, managerDashboardUrl } = buildApprovalLinks(claim);
+
+  const handleOpenNotifyModal = () => {
+    openNotifyManager({
+      title: "Notify Institute Manager",
+      description: "Send official approval notice, public profile URL, and manager dashboard link.",
+      instituteName: claim.institute?.name || "Institute",
+      managerName: claim.fullName,
+      phone: claim.phone,
+      publicListingUrl,
+      managerDashboardUrl,
+      waUrl,
+      waMessage,
+      type: "CLAIM",
+    });
+  };
 
   const handleApprove = async () => {
     setIsApproving(true);
@@ -68,7 +75,7 @@ export default function AdminClaimDetailActions({ claim }: AdminClaimDetailActio
         toast.success("Claim approved successfully! 🎉");
         setCurrentStatus("APPROVED");
         router.refresh();
-        setIsNotifyOpen(true);
+        handleOpenNotifyModal();
       } else {
         toast.error((res as any)?.error || "Failed to approve claim");
       }
@@ -119,22 +126,6 @@ export default function AdminClaimDetailActions({ claim }: AdminClaimDetailActio
     }
   };
 
-  const handleCopyMessage = () => {
-    navigator.clipboard.writeText(waMessage);
-    setCopiedMessage(true);
-    toast.success("Message copied to clipboard!");
-    setTimeout(() => setCopiedMessage(false), 2000);
-  };
-
-  const handleOpenWhatsApp = () => {
-    if (waUrl) {
-      window.open(waUrl, "_blank");
-      setIsNotifyOpen(false);
-    } else {
-      toast.error("No valid phone number for WhatsApp");
-    }
-  };
-
   return (
     <>
       <div className="flex flex-wrap items-center gap-2.5">
@@ -171,13 +162,12 @@ export default function AdminClaimDetailActions({ claim }: AdminClaimDetailActio
           <>
             <button
               type="button"
-              onClick={() => setIsNotifyOpen(true)}
+              onClick={handleOpenNotifyModal}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 rounded-xl hover:bg-emerald-100 hover:text-emerald-900 transition-all shadow-xs cursor-pointer"
             >
               <FaWhatsapp className="w-4 h-4 text-[#25D366]" />
               <span>Notify Manager via WhatsApp</span>
             </button>
-
             <a
               href={managerDashboardUrl}
               target="_blank"
@@ -223,93 +213,6 @@ export default function AdminClaimDetailActions({ claim }: AdminClaimDetailActio
           <span>Delete</span>
         </button>
       </div>
-
-      {/* 🚀 Notify Manager Dialog */}
-      <Dialog open={isNotifyOpen} onOpenChange={setIsNotifyOpen}>
-        <DialogContent className="sm:max-w-lg p-6 rounded-3xl bg-white border border-slate-200 shadow-2xl">
-          <DialogHeader className="gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 shadow-inner">
-                <FaWhatsapp className="w-6 h-6 text-[#25D366]" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-black text-slate-900 leading-tight">
-                  Notify Institute Manager
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                  Send official approval notice, public profile URL, and manager dashboard link.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {/* Quick Details Pill */}
-          <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-700 space-y-2">
-            <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-              <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-slate-500" />
-                {claim.institute?.name || "Institute"}
-              </span>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                Approved
-              </span>
-            </div>
-            <div className="text-slate-600 flex items-center justify-between">
-              <span>Manager: <strong className="text-slate-800">{claim.fullName}</strong></span>
-              <span className="font-mono text-slate-700">{claim.phone}</span>
-            </div>
-          </div>
-
-          {/* WhatsApp Message Preview */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Message Preview
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyMessage}
-                className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
-              >
-                {copiedMessage ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-600" />
-                    <span className="text-emerald-600">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span>Copy Text</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-3.5 max-h-48 overflow-y-auto font-mono text-[11px] text-slate-800 whitespace-pre-wrap leading-relaxed select-all">
-              {waMessage}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-5 flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsNotifyOpen(false)}
-              className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold px-4"
-            >
-              Close
-            </Button>
-            <button
-              type="button"
-              onClick={handleOpenWhatsApp}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
-            >
-              <FaWhatsapp className="w-4 h-4" />
-              <span>Send via WhatsApp</span>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Reject Confirmation */}
       <ConfirmModal

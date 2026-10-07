@@ -5,7 +5,7 @@ export function getProductionBaseUrl(): string {
   }
   if (
     typeof window !== "undefined" &&
-    window.location.origin &&
+    window.location?.origin &&
     !window.location.origin.includes("localhost")
   ) {
     return window.location.origin;

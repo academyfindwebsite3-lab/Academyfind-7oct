@@ -35,6 +35,7 @@ import { ManagerSidebarWrapper } from "@/components/manager/ManagerSidebarWrappe
 import { SidebarLink } from "@/components/manager/SidebarLink";
 import { ScrollToTopAdmin } from "@/components/admin/ScrollToTopAdmin";
 import { AdminSidebarSearch } from "@/components/admin/AdminSidebarSearch";
+import { AdminNotifyProvider, AdminNotifyManagerModal } from "@/components/admin/AdminNotifyManagerModal";
 
 export const metadata: Metadata = {
     title: "Admin Control Panel | AcademyFind",
@@ -193,9 +194,12 @@ export default async function AdminLayout({
                 </ManagerSidebarWrapper>
 
                 {/* --- MAIN ADMIN CONTENT AREA --- */}
-                <main className="flex-1 min-w-0 max-w-full bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(120,113,108,0.06)] p-5 lg:p-8 min-h-[calc(100vh-4rem)]">
-                    {children}
-                </main>
+                <AdminNotifyProvider>
+                    <main className="flex-1 min-w-0 max-w-full bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(120,113,108,0.06)] p-5 lg:p-8 min-h-[calc(100vh-4rem)]">
+                        {children}
+                    </main>
+                    <AdminNotifyManagerModal />
+                </AdminNotifyProvider>
 
                 <ScrollToTopAdmin />
             </div>

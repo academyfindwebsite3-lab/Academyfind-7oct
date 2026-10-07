@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "jest",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -109,6 +110,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
@@ -116,7 +118,9 @@
     "@types/sanitize-html": "^2.16.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "jest": "^30.5.2",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.14",
     "tsx": "^4.22.4",
     "typescript": "^5"
   }

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Check, X, Loader2 } from "lucide-react";
 import { approveInstituteRequest, rejectInstituteRequest } from "@/lib/User/admin/adminApprovalInstitute";
 import toast from "react-hot-toast";
+import { useNotifyManager } from "@/components/admin/AdminNotifyManagerModal";
+import { formatWhatsAppNumber } from "@/lib/institutes/claimLinks";
 
 // 🚀 Shadcn UI Elements Import (Inhe installed rakhein)
 import {
@@ -19,8 +21,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function ApprovalButtons({ requestId }: { requestId: string }) {
+export interface ApprovalButtonsProps {
+  requestId: string;
+  request?: any;
+}
+
+export default function ApprovalButtons({ requestId, request }: ApprovalButtonsProps) {
     const [isPending, setIsPending] = useState(false);
+    const { openNotifyManager } = useNotifyManager();
     // Dialog state management manually control karne ke liye
     const [openType, setOpenType] = useState<"APPROVE" | "REJECT" | null>(null);
 
@@ -37,6 +45,27 @@ export default function ApprovalButtons({ requestId }: { requestId: string }) {
 
         if (res.success) {
             toast.success(res.message || "Operation executed!");
+
+            if (actionType === "APPROVE") {
+                const targetPhone = res.phone || request?.ownerPhone || request?.user?.phone || request?.institute?.phone;
+                const cleanPhone = formatWhatsAppNumber(targetPhone);
+                const waUrl = cleanPhone && res.waMessage 
+                    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(res.waMessage)}`
+                    : "";
+
+                openNotifyManager({
+                    title: "Notify Manager",
+                    description: "Request is approved. Send confirmation & institute links to manager.",
+                    instituteName: res.instituteName || request?.institute?.name || "Institute",
+                    managerName: res.managerName || request?.ownerName || request?.user?.name || "Manager",
+                    phone: targetPhone,
+                    publicListingUrl: res.publicListingUrl,
+                    managerDashboardUrl: res.managerDashboardUrl,
+                    waUrl,
+                    waMessage: res.waMessage,
+                    type: "INSTITUTE_REQUEST",
+                });
+            }
         } else {
             toast.error(res.error || "Execution error.");
         }

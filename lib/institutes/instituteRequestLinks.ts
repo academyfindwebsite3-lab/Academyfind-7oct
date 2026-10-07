@@ -5,7 +5,7 @@ export function getProductionBaseUrl(): string {
   }
   if (
     typeof window !== "undefined" &&
-    window.location.origin &&
+    window.location?.origin &&
     !window.location.origin.includes("localhost")
   ) {
     return window.location.origin;
@@ -52,4 +52,29 @@ If you need any assistance, feel free to reply directly to this message.
 Best Regards,
 *Team AcademyFind*
 🌐 www.academyfind.com`;
+}
+
+export function formatWhatsAppNumber(phone?: string | null): string {
+  if (!phone) return "";
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = cleaned.slice(1);
+  }
+  if (cleaned.length === 10) {
+    cleaned = `91${cleaned}`;
+  }
+  return cleaned;
+}
+
+export function buildInstituteRequestWhatsAppUrl(params: {
+  phone?: string | null;
+  managerName: string;
+  instituteName: string;
+  publicListingUrl: string;
+  managerDashboardUrl: string;
+}): string {
+  const waPhone = formatWhatsAppNumber(params.phone);
+  if (!waPhone) return "";
+  const message = buildInstituteRequestWhatsAppMessage(params);
+  return `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(message)}`;
 }

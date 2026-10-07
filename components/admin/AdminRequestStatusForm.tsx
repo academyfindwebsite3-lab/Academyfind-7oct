@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateInstituteRequestStatus } from "@/app/(af-ass-manage)/af-ass-manage/instituteRequests/actions";
+import { useNotifyManager } from "@/components/admin/AdminNotifyManagerModal";
+import { formatWhatsAppNumber } from "@/lib/institutes/claimLinks";
 
 export default function AdminRequestStatusForm({ 
     requestId, 
@@ -18,12 +20,32 @@ export default function AdminRequestStatusForm({
     const [isPending, setIsPending] = useState(false);
     const [status, setStatus] = useState(initialStatus);
     const [notes, setNotes] = useState(initialNotes || "");
+    const { openNotifyManager } = useNotifyManager();
 
     const handleSave = async () => {
         setIsPending(true);
         const res = await updateInstituteRequestStatus(requestId, status, notes);
         if (res.success) {
             toast.success("Status & notes updated successfully!");
+            if (status === "APPROVED") {
+                const cleanPhone = formatWhatsAppNumber(res.phone);
+                const waUrl = cleanPhone && res.waMessage 
+                    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(res.waMessage)}`
+                    : "";
+
+                openNotifyManager({
+                    title: "Notify Manager",
+                    description: "Request is approved. Send confirmation & institute links to manager.",
+                    instituteName: res.instituteName || "Institute",
+                    managerName: res.managerName || "Manager",
+                    phone: res.phone,
+                    publicListingUrl: res.publicListingUrl,
+                    managerDashboardUrl: res.managerDashboardUrl,
+                    waUrl,
+                    waMessage: res.waMessage,
+                    type: "INSTITUTE_REQUEST",
+                });
+            }
         } else {
             toast.error(res.error || "Execution error.");
         }
