@@ -39,37 +39,47 @@ export default function ApprovalButtons({ requestId, request }: ApprovalButtonsP
         setOpenType(null); // Dialog ko pehle close kar dete hain smooth transition ke liye
         setIsPending(true);
         
-        const res = actionType === "APPROVE" 
-            ? await approveInstituteRequest(requestId)
-            : await rejectInstituteRequest(requestId);
-
-        if (res.success) {
-            toast.success(res.message || "Operation executed!");
-
+        try {
             if (actionType === "APPROVE") {
-                const targetPhone = res.phone || request?.ownerPhone || request?.user?.phone || request?.institute?.phone;
-                const cleanPhone = formatWhatsAppNumber(targetPhone);
-                const waUrl = cleanPhone && res.waMessage 
-                    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(res.waMessage)}`
-                    : "";
+                const res = await approveInstituteRequest(requestId);
+                if (res.success) {
+                    toast.success(res.message || "Operation executed!");
 
-                openNotifyManager({
-                    title: "Notify Manager",
-                    description: "Request is approved. Send confirmation & institute links to manager.",
-                    instituteName: res.instituteName || request?.institute?.name || "Institute",
-                    managerName: res.managerName || request?.ownerName || request?.user?.name || "Manager",
-                    phone: targetPhone,
-                    publicListingUrl: res.publicListingUrl,
-                    managerDashboardUrl: res.managerDashboardUrl,
-                    waUrl,
-                    waMessage: res.waMessage,
-                    type: "INSTITUTE_REQUEST",
-                });
+                    const targetPhone = res.phone || request?.ownerPhone || request?.user?.phone || request?.institute?.phone;
+                    const cleanPhone = formatWhatsAppNumber(targetPhone);
+                    const waUrl = cleanPhone && res.waMessage 
+                        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(res.waMessage)}`
+                        : "";
+
+                    openNotifyManager({
+                        title: "Notify Manager",
+                        description: "Request is approved. Send confirmation & institute links to manager.",
+                        instituteName: res.instituteName || request?.institute?.name || "Institute",
+                        managerName: res.managerName || request?.ownerName || request?.user?.name || "Manager",
+                        phone: targetPhone,
+                        publicListingUrl: res.publicListingUrl,
+                        managerDashboardUrl: res.managerDashboardUrl,
+                        waUrl,
+                        waMessage: res.waMessage,
+                        type: "INSTITUTE_REQUEST",
+                    });
+                } else {
+                    toast.error(res.error || "Execution error.");
+                }
+            } else {
+                const res = await rejectInstituteRequest(requestId);
+                if (res.success) {
+                    toast.success(res.message || "Operation executed!");
+                } else {
+                    toast.error(res.error || "Execution error.");
+                }
             }
-        } else {
-            toast.error(res.error || "Execution error.");
+        } catch (error) {
+            console.error("Action handler error:", error);
+            toast.error("An unexpected error occurred.");
+        } finally {
+            setIsPending(false);
         }
-        setIsPending(false);
     };
 
     return (
